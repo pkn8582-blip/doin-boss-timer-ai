@@ -1,0 +1,5 @@
+{
+  "name": "Odin Boss Timer AI",
+  "description": "Upload screenshots of Odin: Valhalla Rising boss schedules to automatically calculate spawn times.",
+  "requestFramePermissions": []
+}

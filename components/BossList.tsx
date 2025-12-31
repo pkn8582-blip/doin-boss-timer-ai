@@ -26,7 +26,7 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis, is
           const minutes = timeParts[1] || '00';
           const seconds = timeParts[2] || '00';
           
-          const displayName = isInvasionMode ? `침공 ${boss.bossName}` : boss.bossName;
+          const displayName = isInvasionMode ? `(침공)${boss.bossName}` : boss.bossName;
 
           return (
             <div 
@@ -71,7 +71,7 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis, is
          <button 
             onClick={() => {
                 const text = schedule.map(b => {
-                  const name = isInvasionMode ? `침공 ${b.bossName}` : b.bossName;
+                  const name = isInvasionMode ? `(침공)${b.bossName}` : b.bossName;
                   return `${b.spawnTime} ${name}`;
                 }).join('\n');
                 navigator.clipboard.writeText(text);

@@ -4,15 +4,18 @@ import { BossSpawn } from '../types';
 interface BossListProps {
   schedule: BossSpawn[];
   currentTimeAtAnalysis: string;
+  isInvasionMode: boolean;
 }
 
-const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis }) => {
+const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis, isInvasionMode }) => {
   if (schedule.length === 0) return null;
 
   return (
     <div className="w-full max-w-md mx-auto animate-fade-in-up">
       <div className="flex justify-between items-end mb-3 px-1">
-        <h2 className="text-lg font-semibold text-slate-200">보스 등장 일정</h2>
+        <h2 className="text-lg font-semibold text-slate-200">
+          {isInvasionMode ? "침공 보스 등장 일정" : "보스 등장 일정"}
+        </h2>
         <span className="text-xs text-slate-500">기준 시간: {currentTimeAtAnalysis}</span>
       </div>
       
@@ -22,6 +25,8 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis }) 
           const hours = timeParts[0];
           const minutes = timeParts[1] || '00';
           const seconds = timeParts[2] || '00';
+          
+          const displayName = isInvasionMode ? `침공 ${boss.bossName}` : boss.bossName;
 
           return (
             <div 
@@ -43,8 +48,8 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis }) 
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-medium text-slate-100 text-lg">
-                    {boss.bossName}
+                  <span className={`font-medium text-lg ${isInvasionMode ? 'text-red-300' : 'text-slate-100'}`}>
+                    {displayName}
                   </span>
                   {boss.remainingTimeText && (
                     <span className="text-xs text-slate-500">
@@ -65,7 +70,10 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis }) 
       <div className="mt-4 text-center">
          <button 
             onClick={() => {
-                const text = schedule.map(b => `${b.spawnTime} ${b.bossName}`).join('\n');
+                const text = schedule.map(b => {
+                  const name = isInvasionMode ? `침공 ${b.bossName}` : b.bossName;
+                  return `${b.spawnTime} ${name}`;
+                }).join('\n');
                 navigator.clipboard.writeText(text);
                 alert('클립보드에 복사되었습니다!');
             }}

@@ -9,6 +9,7 @@ const App: React.FC = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [schedule, setSchedule] = useState<BossSpawn[]>([]);
   const [analysisTime, setAnalysisTime] = useState<string>("");
+  const [isInvasionMode, setIsInvasionMode] = useState<boolean>(false);
   
   const [status, setStatus] = useState<ProcessingState>({
     isLoading: false,
@@ -101,6 +102,20 @@ const App: React.FC = () => {
               isLoading={status.isLoading}
             />
             
+            <div className="flex items-center justify-center mt-6 mb-2">
+              <label className="flex items-center space-x-2 cursor-pointer group select-none">
+                <input 
+                  type="checkbox" 
+                  checked={isInvasionMode}
+                  onChange={(e) => setIsInvasionMode(e.target.checked)}
+                  className="w-5 h-5 accent-amber-500 rounded focus:ring-amber-500 bg-slate-800 border-slate-600 cursor-pointer"
+                />
+                <span className="text-slate-300 group-hover:text-amber-400 transition-colors font-medium">
+                  침공 서버 (보스 이름 앞에 '침공' 추가)
+                </span>
+              </label>
+            </div>
+            
             <div className="flex justify-center mt-4">
               <button
                 onClick={handleAnalyze}
@@ -139,6 +154,7 @@ const App: React.FC = () => {
             <BossList 
               schedule={schedule} 
               currentTimeAtAnalysis={analysisTime} 
+              isInvasionMode={isInvasionMode}
             />
           )}
         </main>

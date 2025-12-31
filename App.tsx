@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Header from './components/Header';
 import ImageUploader from './components/ImageUploader';
 import BossList from './components/BossList';
@@ -10,18 +10,91 @@ const App: React.FC = () => {
   const [schedule, setSchedule] = useState<BossSpawn[]>([]);
   const [analysisTime, setAnalysisTime] = useState<string>("");
   const [isInvasionMode, setIsInvasionMode] = useState<boolean>(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
+  // Keep track of which bosses have already triggered a notification to prevent duplicates
+  // Key format: "BossName-SpawnTime"
+  const notifiedBossesRef = useRef<Set<string>>(new Set());
+
   const [status, setStatus] = useState<ProcessingState>({
     isLoading: false,
     error: null,
     success: false,
   });
 
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  // Timer for checking boss spawn times
+  useEffect(() => {
+    if (notificationPermission !== 'granted' || schedule.length === 0) return;
+
+    const checkInterval = setInterval(() => {
+      const now = new Date();
+      
+      schedule.forEach(boss => {
+        const uniqueKey = `${boss.bossName}-${boss.spawnTime}`;
+        if (notifiedBossesRef.current.has(uniqueKey)) return;
+
+        // Parse spawn time
+        const [h, m, s] = boss.spawnTime.split(':').map(Number);
+        const spawnDate = new Date();
+        spawnDate.setHours(h, m, s, 0);
+
+        // Handle day rollover (if spawn time is earlier than now by a large margin, assume it's tomorrow, 
+        // but here we usually just need to check if it's in the near future)
+        // If spawnDate is significantly in the past compared to now, it might mean it's for tomorrow 
+        // (e.g. now is 23:50, spawn is 00:10).
+        if (spawnDate.getTime() < now.getTime() - 1000 * 60 * 60 * 12) {
+             spawnDate.setDate(spawnDate.getDate() + 1);
+        } else if (spawnDate.getTime() < now.getTime()) {
+             // Already passed, ignore
+             return;
+        }
+
+        const diffMs = spawnDate.getTime() - now.getTime();
+        const diffSeconds = diffMs / 1000;
+
+        // Trigger if between 0 and 60 seconds (1 minute before)
+        if (diffSeconds > 0 && diffSeconds <= 60) {
+          const name = isInvasionMode ? `(침공)${boss.bossName}` : boss.bossName;
+          
+          new Notification('오딘 보스 알림', {
+            body: `${name} 등장 1분 전입니다! (${boss.spawnTime})`,
+            icon: '/favicon.ico', // Optional: triggers if you have a favicon
+            requireInteraction: true
+          });
+
+          notifiedBossesRef.current.add(uniqueKey);
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(checkInterval);
+  }, [schedule, notificationPermission, isInvasionMode]);
+
+  const requestNotificationPermission = async () => {
+    if (!('Notification' in window)) {
+      alert("이 브라우저는 알림을 지원하지 않습니다.");
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    
+    if (permission === 'granted') {
+      new Notification('오딘 보스 알림', { body: '알림이 활성화되었습니다!' });
+    }
+  };
+
   const handleFilesSelected = (selectedFiles: File[]) => {
     setFiles(selectedFiles);
-    // Reset previous results when new files are added if desired, or keep them until analyze is clicked
     if (selectedFiles.length === 0) {
         setSchedule([]);
+        notifiedBossesRef.current.clear();
     }
   };
 
@@ -38,26 +111,19 @@ const App: React.FC = () => {
       const seconds = String(now.getSeconds()).padStart(2, '0');
       const systemTime = `${hours}:${minutes}:${seconds}`;
       
-      // We pass the system time, but the service will try to find the time in the screenshot first
       const result = await analyzeScreenshots(files, systemTime);
       
-      // Determine reference time for sorting (fallback to systemTime if result is invalid)
-      // Accept HH:MM or HH:MM:SS
       const refTimeStr = result.referenceTime.match(/^\d{1,2}:\d{2}(:\d{2})?$/) 
         ? result.referenceTime 
         : systemTime;
 
-      // Sort bosses by spawn time (in seconds)
       const getSeconds = (timeStr: string) => {
         const parts = timeStr.split(':').map(Number);
         if (parts.length === 0) return 0;
         
         let totalSeconds = 0;
-        // HH
         if (parts.length >= 1) totalSeconds += parts[0] * 3600;
-        // MM
         if (parts.length >= 2) totalSeconds += parts[1] * 60;
-        // SS
         if (parts.length >= 3) totalSeconds += parts[2];
         
         return totalSeconds;
@@ -69,8 +135,6 @@ const App: React.FC = () => {
         let secA = getSeconds(a.spawnTime);
         let secB = getSeconds(b.spawnTime);
 
-        // If spawn time is earlier than reference time (e.g. Ref 23:00, Spawn 01:00), 
-        // treat it as next day (+24h = +86400s)
         if (secA < refSeconds) secA += 86400;
         if (secB < refSeconds) secB += 86400;
 
@@ -78,7 +142,10 @@ const App: React.FC = () => {
       });
       
       setSchedule(sortedBosses);
-      setAnalysisTime(result.referenceTime); // Use the time determined by the AI
+      // Clear notified history when new analysis happens so we don't miss new triggers
+      notifiedBossesRef.current.clear(); 
+      
+      setAnalysisTime(result.referenceTime);
       setStatus({ isLoading: false, error: null, success: true });
     } catch (err: any) {
       setStatus({ 
@@ -155,6 +222,8 @@ const App: React.FC = () => {
               schedule={schedule} 
               currentTimeAtAnalysis={analysisTime} 
               isInvasionMode={isInvasionMode}
+              notificationPermission={notificationPermission}
+              onRequestNotification={requestNotificationPermission}
             />
           )}
         </main>

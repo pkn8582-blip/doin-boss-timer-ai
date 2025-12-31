@@ -5,9 +5,17 @@ interface BossListProps {
   schedule: BossSpawn[];
   currentTimeAtAnalysis: string;
   isInvasionMode: boolean;
+  notificationPermission: NotificationPermission;
+  onRequestNotification: () => void;
 }
 
-const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis, isInvasionMode }) => {
+const BossList: React.FC<BossListProps> = ({ 
+  schedule, 
+  currentTimeAtAnalysis, 
+  isInvasionMode,
+  notificationPermission,
+  onRequestNotification
+}) => {
   if (schedule.length === 0) return null;
 
   return (
@@ -67,20 +75,45 @@ const BossList: React.FC<BossListProps> = ({ schedule, currentTimeAtAnalysis, is
         })}
       </div>
       
-      <div className="mt-4 text-center">
-         <button 
-            onClick={() => {
-                const text = schedule.map(b => {
-                  const name = isInvasionMode ? `(침공)${b.bossName}` : b.bossName;
-                  return `${b.spawnTime} ${name}`;
-                }).join('\n');
-                navigator.clipboard.writeText(text);
-                alert('클립보드에 복사되었습니다!');
-            }}
-            className="text-xs text-amber-500 hover:text-amber-400 underline cursor-pointer"
-         >
-            전체 목록 복사하기
-         </button>
+      <div className="mt-4 flex flex-col space-y-3">
+         <div className="flex justify-center space-x-4 text-sm">
+             <button 
+                onClick={() => {
+                    const text = schedule.map(b => {
+                      const name = isInvasionMode ? `(침공)${b.bossName}` : b.bossName;
+                      return `${b.spawnTime} ${name}`;
+                    }).join('\n');
+                    navigator.clipboard.writeText(text);
+                    alert('클립보드에 복사되었습니다!');
+                }}
+                className="text-amber-500 hover:text-amber-400 underline cursor-pointer"
+             >
+                전체 목록 복사하기
+             </button>
+
+             <button
+                onClick={onRequestNotification}
+                className={`flex items-center underline cursor-pointer ${
+                    notificationPermission === 'granted' 
+                        ? 'text-green-500 hover:text-green-400' 
+                        : 'text-slate-400 hover:text-slate-300'
+                }`}
+             >
+                {notificationPermission === 'granted' ? (
+                    <>
+                        <span className="mr-1">🔔</span> 알림 켜짐 (1분 전)
+                    </>
+                ) : notificationPermission === 'denied' ? (
+                    <>
+                        <span className="mr-1">🔕</span> 알림 차단됨 (설정 필요)
+                    </>
+                ) : (
+                    <>
+                        <span className="mr-1">🔔</span> 알림 받기
+                    </>
+                )}
+             </button>
+         </div>
       </div>
     </div>
   );

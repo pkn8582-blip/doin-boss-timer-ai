@@ -32,7 +32,7 @@ const BossList: React.FC<BossListProps> = ({
           const timeParts = boss.spawnTime.split(':');
           const hours = timeParts[0];
           const minutes = timeParts[1] || '00';
-          const seconds = timeParts[2] || '00';
+          // Seconds are available in boss.spawnTime but hidden in UI
           
           const displayName = isInvasionMode ? `(침공)${boss.bossName}` : boss.bossName;
 
@@ -42,18 +42,15 @@ const BossList: React.FC<BossListProps> = ({
               className="flex items-center justify-between p-4 hover:bg-slate-700/50 transition-colors"
             >
               <div className="flex items-center space-x-4">
-                <div className="flex-shrink-0 w-20 h-14 rounded-lg bg-slate-900 flex flex-col items-center justify-center border border-slate-700 px-1">
+                <div className="flex-shrink-0 w-20 h-14 rounded-lg bg-slate-900 flex items-center justify-center border border-slate-700 px-1">
                   <div className="flex items-baseline">
-                    <span className="text-amber-500 font-bold text-lg leading-none">
+                    <span className="text-amber-500 font-bold text-xl leading-none">
                         {hours}
                     </span>
-                    <span className="text-amber-600 font-bold text-sm leading-none">
+                    <span className="text-amber-600 font-bold text-lg leading-none">
                         :{minutes}
                     </span>
                   </div>
-                  <span className="text-slate-500 text-xs leading-none mt-1">
-                      :{seconds}
-                  </span>
                 </div>
                 <div className="flex flex-col">
                   <span className={`font-medium text-lg ${isInvasionMode ? 'text-red-300' : 'text-slate-100'}`}>
@@ -81,7 +78,9 @@ const BossList: React.FC<BossListProps> = ({
                 onClick={() => {
                     const text = schedule.map(b => {
                       const name = isInvasionMode ? `(침공)${b.bossName}` : b.bossName;
-                      return `${b.spawnTime} ${name}`;
+                      // Slice to HH:MM for clipboard as well
+                      const shortTime = b.spawnTime.split(':').slice(0, 2).join(':');
+                      return `${shortTime} ${name}`;
                     }).join('\n');
                     navigator.clipboard.writeText(text);
                     alert('클립보드에 복사되었습니다!');

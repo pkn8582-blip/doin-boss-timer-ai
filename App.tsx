@@ -10,6 +10,7 @@ const App: React.FC = () => {
   const [schedule, setSchedule] = useState<BossSpawn[]>([]);
   const [analysisTime, setAnalysisTime] = useState<string>("");
   const [isInvasionMode, setIsInvasionMode] = useState<boolean>(false);
+  const [showSeconds, setShowSeconds] = useState<boolean>(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
   // Keep track of which bosses have already triggered a notification to prevent duplicates
@@ -44,27 +45,21 @@ const App: React.FC = () => {
         const spawnDate = new Date();
         spawnDate.setHours(h, m, s, 0);
 
-        // Handle day rollover (if spawn time is earlier than now by a large margin, assume it's tomorrow, 
-        // but here we usually just need to check if it's in the near future)
-        // If spawnDate is significantly in the past compared to now, it might mean it's for tomorrow 
-        // (e.g. now is 23:50, spawn is 00:10).
         if (spawnDate.getTime() < now.getTime() - 1000 * 60 * 60 * 12) {
              spawnDate.setDate(spawnDate.getDate() + 1);
         } else if (spawnDate.getTime() < now.getTime()) {
-             // Already passed, ignore
              return;
         }
 
         const diffMs = spawnDate.getTime() - now.getTime();
         const diffSeconds = diffMs / 1000;
 
-        // Trigger if between 0 and 60 seconds (1 minute before)
         if (diffSeconds > 0 && diffSeconds <= 60) {
           const name = isInvasionMode ? `(침공)${boss.bossName}` : boss.bossName;
           
           new Notification('오딘 보스 알림', {
             body: `${name} 등장 1분 전입니다! (${boss.spawnTime})`,
-            icon: '/favicon.ico', // Optional: triggers if you have a favicon
+            icon: '/favicon.ico',
             requireInteraction: true
           });
 
@@ -104,7 +99,6 @@ const App: React.FC = () => {
     setStatus({ isLoading: true, error: null, success: false });
     
     try {
-      // Get current system time formatted as HH:mm:ss to serve as a fallback
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
@@ -142,7 +136,6 @@ const App: React.FC = () => {
       });
       
       setSchedule(sortedBosses);
-      // Clear notified history when new analysis happens so we don't miss new triggers
       notifiedBossesRef.current.clear(); 
       
       setAnalysisTime(result.referenceTime);
@@ -169,7 +162,7 @@ const App: React.FC = () => {
               isLoading={status.isLoading}
             />
             
-            <div className="flex items-center justify-center mt-6 mb-2">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 mb-2">
               <label className="flex items-center space-x-2 cursor-pointer group select-none">
                 <input 
                   type="checkbox" 
@@ -178,7 +171,19 @@ const App: React.FC = () => {
                   className="w-5 h-5 accent-amber-500 rounded focus:ring-amber-500 bg-slate-800 border-slate-600 cursor-pointer"
                 />
                 <span className="text-slate-300 group-hover:text-amber-400 transition-colors font-medium">
-                  침공 서버 (보스 이름 앞에 '침공' 추가)
+                  침공 서버
+                </span>
+              </label>
+
+              <label className="flex items-center space-x-2 cursor-pointer group select-none">
+                <input 
+                  type="checkbox" 
+                  checked={showSeconds}
+                  onChange={(e) => setShowSeconds(e.target.checked)}
+                  className="w-5 h-5 accent-amber-500 rounded focus:ring-amber-500 bg-slate-800 border-slate-600 cursor-pointer"
+                />
+                <span className="text-slate-300 group-hover:text-amber-400 transition-colors font-medium">
+                  초 단위 포함
                 </span>
               </label>
             </div>
@@ -222,6 +227,7 @@ const App: React.FC = () => {
               schedule={schedule} 
               currentTimeAtAnalysis={analysisTime} 
               isInvasionMode={isInvasionMode}
+              showSeconds={showSeconds}
               notificationPermission={notificationPermission}
               onRequestNotification={requestNotificationPermission}
             />

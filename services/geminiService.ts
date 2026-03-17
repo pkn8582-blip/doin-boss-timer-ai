@@ -25,11 +25,26 @@ export const analyzeScreenshots = async (
 
   const prompt = `
     Odin Boss Calculator. System Time: ${currentTime}
-    1. Find 'Reference Time' (HH:MM:SS) from image clock or metadata.
-    2. Read 'Remaining Time' (HH:MM:SS).
-    3. Calculate 'Spawn Time' = Reference + Remaining.
-    4. Exclude: "혼돈의마수 굴베이그", "스네르", "강글로티", "1일 이상", "출현 중"(Except Blessed bosses).
-    5. Rename: "브린힐드"->"브륀힐드", "화신 그로아"->"화신그로아", "분노의 모네가름"->"지감4층", "나태의 드라우그"->"지감7층", "기만의 기사 다인홀로크"->"지감10층", "축복받은 X"->"X".
+    
+    [CRITICAL INSTRUCTIONS]
+    1. Accuracy is top priority. Calculate seconds precisely.
+    2. Scan all images thoroughly. Do not skip any bosses.
+    3. Find 'Reference Time' (HH:MM:SS) from the game's clock in the image or metadata.
+    4. Read 'Remaining Time' (HH:MM:SS) for each boss.
+    5. Calculate 'Spawn Time' = Reference Time + Remaining Time.
+    
+    [BOSS LIST RULES]
+    - INCLUDE: "굴베이그", "호드", "헤이드", "대교주프레이", "이미르" and others.
+    - EXCLUDE: "혼돈의마수 굴베이그", "스네르", "강글로티", "1일 이상", "출현 중"(Except Blessed bosses).
+    - RENAME: 
+      "브린힐드" -> "브륀힐드"
+      "대교주 프레이" -> "대교주프레이"
+      "화신 그로아" -> "화신그로아"
+      "분노의 모네가름" -> "지감4층"
+      "나태의 드라우그" -> "지감7층"
+      "기만의 기사 다인홀로크" -> "지감10층"
+      "축복받은 X" -> "X"
+      
     Return JSON only.
   `;
 
@@ -38,7 +53,6 @@ export const analyzeScreenshots = async (
       model: "gemini-3-flash-preview",
       contents: { parts: [...parts, { text: prompt }] },
       config: {
-        thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,

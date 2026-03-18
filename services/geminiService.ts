@@ -27,11 +27,14 @@ export const analyzeScreenshots = async (
     Odin Boss Calculator. System Time: ${currentTime}
     
     [CRITICAL INSTRUCTIONS]
-    1. Accuracy is top priority. Calculate seconds precisely.
-    2. Scan all images thoroughly. Do not skip any bosses.
-    3. Find 'Reference Time' (HH:MM:SS) from the game's clock in the image or metadata.
-    4. Read 'Remaining Time' (HH:MM:SS) for each boss.
-    5. Calculate 'Spawn Time' = Reference Time + Remaining Time.
+    1. Accuracy is the absolute priority. You must calculate the exact seconds.
+    2. Find 'Reference Time' (HH:MM:SS) from the in-game clock (usually top-left). This is the most accurate sync point. If not visible, use the provided file modification time.
+    3. Read 'Remaining Time' (HH:MM:SS) for each boss precisely as shown in the image.
+    4. Calculate 'Spawn Time' = Reference Time + Remaining Time. 
+       - Perform this as a strict mathematical addition of time.
+       - Example: If Reference is 12:00:05 and Remaining is 00:10:10, Spawn is 12:10:15.
+    5. Do not round seconds. If the image shows 45 seconds, use 45 seconds.
+    6. Scan all images thoroughly. Do not skip any bosses.
     
     [BOSS LIST RULES]
     - INCLUDE: "굴베이그", "호드", "헤이드", "대교주프레이", "이미르" and others.
